@@ -1,7 +1,14 @@
-# Copy to compose.yml and adjust. Fronted by the hueske-digital/caddy stack
-# (Caddy + tinyauth + your OIDC provider, e.g. Pocket ID). Caddy discovers this
-# service on the shared `caddy` network via the CADDY_* env vars below and
-# handles TLS + forward-auth — so no port is published here.
+# Fronted by the hueske-digital/caddy stack (Caddy + tinyauth + your OIDC
+# provider, e.g. Pocket ID). Caddy discovers this service on the shared `caddy`
+# network via the CADDY_* env vars below and handles TLS + forward-auth — so no
+# port is published here.
+#
+# Provide the deployment-specific values in a sibling .env file (git-ignored):
+#   CADDY_DOMAIN=holiday.example.com
+#   CADDY_AUTH_GROUPS=larissa_und_tobias
+#   PUSHOVER_TOKEN=...        # optional
+#   PUSHOVER_USER=...         # optional
+#   PUSHOVER_DEVICE=...       # optional
 services:
   holidaycheck-monitor:
     image: ghcr.io/OWNER/holidaycheck-monitor:latest
@@ -16,15 +23,15 @@ services:
       SCRAPE_TIMEOUT_MS: 45000
       SCRAPE_ATTEMPTS: 4
       HEADLESS: "true"
-      # PUSHOVER_TOKEN: ""
-      # PUSHOVER_USER: ""
-      # PUSHOVER_DEVICE: ""
+      PUSHOVER_TOKEN: ${PUSHOVER_TOKEN:-}
+      PUSHOVER_USER: ${PUSHOVER_USER:-}
+      PUSHOVER_DEVICE: ${PUSHOVER_DEVICE:-}
       # --- Caddy (reverse proxy + auth) ---
-      CADDY_DOMAIN: holiday.example.com
+      CADDY_DOMAIN: ${CADDY_DOMAIN:?set CADDY_DOMAIN in .env}
       CADDY_TYPE: external
       CADDY_PORT: 3000
       CADDY_AUTH: "true"
-      CADDY_AUTH_GROUPS: larissa_und_tobias
+      CADDY_AUTH_GROUPS: ${CADDY_AUTH_GROUPS:?set CADDY_AUTH_GROUPS in .env}
     volumes:
       - holidaycheck-monitor-data:/data
     shm_size: "1gb"

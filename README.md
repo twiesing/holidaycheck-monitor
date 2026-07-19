@@ -82,10 +82,15 @@ docker build -t holidaycheck-monitor .
 docker run --rm -p 3000:3000 -v holidaycheck-monitor-data:/data holidaycheck-monitor
 ```
 
-Für Compose gibt es eine Vorlage in `compose.example.yml`:
+Für Compose gibt es `docker-compose.yml` (hinter Caddy/tinyauth). Die
+deployment-spezifischen Werte kommen aus einer `.env` daneben (git-ignoriert):
 
 ```bash
-cp compose.example.yml compose.yml
+# .env anlegen:
+#   CADDY_DOMAIN=holiday.example.com
+#   CADDY_AUTH_GROUPS=larissa_und_tobias
+#   PUSHOVER_TOKEN=...        # optional
+#   PUSHOVER_USER=...         # optional
 # image: ghcr.io/OWNER/holidaycheck-monitor:latest anpassen oder build: . aktivieren
 docker compose up -d
 ```
