@@ -83,6 +83,56 @@ body {
   margin: 24px 0 20px;
 }
 
+/* ---------- Country groups ---------- */
+.groups {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.group-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 4px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  font: inherit;
+  color: var(--text);
+  transition: border-color 160ms var(--ease-out);
+}
+.group-head:active {
+  transform: scale(0.995);
+}
+
+.group-chevron {
+  flex-shrink: 0;
+  color: var(--muted-2);
+  transition: transform 180ms var(--ease-out);
+}
+.group-chevron.open {
+  transform: rotate(90deg);
+}
+
+.group-title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.group-preview {
+  margin-left: auto;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.country-group .watch-list {
+  margin-top: 14px;
+}
+
 /* ---------- List + card ---------- */
 .watch-list {
   display: flex;
