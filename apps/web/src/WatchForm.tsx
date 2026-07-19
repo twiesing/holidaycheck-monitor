@@ -17,6 +17,7 @@ import type {
 } from "./types";
 
 const INTERVALS = [
+  { value: "*/30 * * * *", label: "alle 30 Minuten" },
   { value: "0 */3 * * *", label: "alle 3 Stunden" },
   { value: "0 */6 * * *", label: "alle 6 Stunden" },
   { value: "0 */12 * * *", label: "alle 12 Stunden" },
