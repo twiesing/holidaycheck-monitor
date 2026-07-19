@@ -1,0 +1,24 @@
+node_modules/
+dist/
+*.log
+
+# Env / secrets
+.env
+.env.local
+.env.*.local
+
+# SQLite data
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+data/
+
+# Playwright
+/playwright-report/
+/test-results/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

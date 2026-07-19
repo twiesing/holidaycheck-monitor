@@ -1,0 +1,365 @@
+:root {
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --border: #ececec;
+  --border-strong: #e0e0e0;
+  --text: #171717;
+  --muted: #6b7280;
+  --muted-2: #9ca3af;
+  --down: #15803d;
+  --down-bg: #f0fdf4;
+  --down-border: #bbf7d0;
+  --up: #b91c1c;
+  --accent-bg: #f4f4f5;
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Geist", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.mono {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Press feedback on every pressable (Emil) ---------- */
+.mantine-Button-root,
+.mantine-ActionIcon-root {
+  transition:
+    transform 160ms var(--ease-out),
+    background-color 160ms var(--ease-out),
+    border-color 160ms var(--ease-out),
+    color 160ms var(--ease-out) !important;
+}
+.mantine-Button-root:active,
+.mantine-ActionIcon-root:active {
+  transform: scale(0.97);
+}
+
+.app {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 56px 24px 120px;
+}
+
+/* ---------- Header ---------- */
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.head h1 {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.head .sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 2px 0 0;
+}
+
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 24px 0 20px;
+}
+
+/* ---------- List + card ---------- */
+.watch-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.watch-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px 22px;
+  box-shadow: 0 1px 2px rgba(17, 17, 17, 0.03);
+  transition:
+    transform 200ms var(--ease-out),
+    box-shadow 200ms var(--ease-out),
+    border-color 200ms var(--ease-out);
+  animation: rise 340ms var(--ease-out) both;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .watch-card:hover {
+    border-color: var(--border-strong);
+    box-shadow: 0 4px 16px -8px rgba(17, 17, 17, 0.12);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.hotel-name {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  margin: 0 0 7px;
+}
+
+/* ---------- Price ---------- */
+.price-tag {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.price-value {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.price-pp {
+  font-size: 11px;
+  color: var(--muted-2);
+  margin-top: 2px;
+}
+
+.delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12.5px;
+  font-weight: 500;
+  margin-top: 4px;
+}
+.delta.down {
+  color: var(--down);
+}
+.delta.up {
+  color: var(--up);
+}
+
+/* ---------- Meta ---------- */
+.meta-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.meta-line b {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: var(--muted-2);
+}
+
+/* ---------- Flights (quiet) ---------- */
+.flights {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.leg {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.leg-tag {
+  font-size: 11px;
+  color: var(--muted-2);
+  width: 30px;
+  flex-shrink: 0;
+}
+
+.leg .mono {
+  color: var(--text);
+  font-size: 12.5px;
+}
+
+.leg .arrow {
+  color: var(--muted-2);
+}
+
+.leg .dim {
+  color: var(--muted-2);
+  font-size: 12px;
+}
+
+/* ---------- Chips ---------- */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.chip {
+  font-size: 12px;
+  padding: 3px 9px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--accent-bg);
+  color: var(--text);
+}
+
+.chip.included {
+  background: var(--down-bg);
+  border-color: var(--down-border);
+  color: var(--down);
+}
+
+.chip.muted {
+  background: transparent;
+  color: var(--muted-2);
+  border-style: dashed;
+}
+
+/* ---------- Stats line ---------- */
+.stats-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 14px;
+  font-size: 12.5px;
+  color: var(--muted-2);
+}
+.stats-line b {
+  color: var(--text);
+  font-weight: 500;
+}
+.stats-line .good {
+  color: var(--down);
+  font-weight: 500;
+}
+.stats-line .bad {
+  color: var(--up);
+  font-weight: 500;
+}
+
+/* ---------- Footer ---------- */
+.card-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.stamp {
+  font-size: 12px;
+  color: var(--muted-2);
+}
+
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+/* ---------- History panel ---------- */
+.history-panel {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  animation: reveal 260ms var(--ease-out) both;
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.section-label {
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--muted-2);
+  margin: 0 0 10px;
+}
+
+/* ---------- Empty ---------- */
+.empty {
+  text-align: center;
+  padding: 64px 24px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.empty h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 10px 0 6px;
+}
+.empty p {
+  color: var(--muted);
+  max-width: 340px;
+  margin: 0 auto;
+  font-size: 13.5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .watch-card,
+  .history-panel {
+    animation: none;
+  }
+  .mantine-Button-root:active,
+  .mantine-ActionIcon-root:active {
+    transform: none;
+  }
+  .watch-card:hover {
+    transform: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .app {
+    padding: 40px 18px 96px;
+  }
+}
