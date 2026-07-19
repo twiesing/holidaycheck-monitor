@@ -6,9 +6,10 @@ import {
   Menu,
   Modal,
   NumberInput,
+  SegmentedControl,
   Stack,
 } from "@mantine/core";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "./api";
 import {
   formatDate,
@@ -59,6 +60,14 @@ export function WatchCard({
   const [checking, setChecking] = useState(false);
   const [targetModalOpen, setTargetModalOpen] = useState(false);
   const [targetDraft, setTargetDraft] = useState<number | "">("");
+  const [range, setRange] = useState("30");
+
+  const shownHistory = useMemo(() => {
+    if (!history) return null;
+    if (range === "all") return history;
+    const cutoff = Date.now() - Number(range) * 86_400_000;
+    return history.filter((p) => new Date(p.checkedAt).getTime() >= cutoff);
+  }, [history, range]);
 
   const loadHistory = useCallback(async () => {
     setHistory(await api.history(watch.id));
@@ -322,11 +331,29 @@ export function WatchCard({
 
       {expanded && (
         <div className="history-panel">
-          <p className="section-label">Preisverlauf</p>
-          {history === null ? (
+          <div className="history-head">
+            <p className="section-label">Preisverlauf</p>
+            {history && history.length > 0 && (
+              <SegmentedControl
+                size="xs"
+                value={range}
+                onChange={setRange}
+                data={[
+                  { label: "7 T", value: "7" },
+                  { label: "30 T", value: "30" },
+                  { label: "90 T", value: "90" },
+                  { label: "Alles", value: "all" },
+                ]}
+              />
+            )}
+          </div>
+          {shownHistory === null ? (
             <p className="stamp">Lade Verlauf…</p>
           ) : (
-            <HistoryChart points={history} targetPrice={watch.targetPrice} />
+            <HistoryChart
+              points={shownHistory}
+              targetPrice={watch.targetPrice}
+            />
           )}
         </div>
       )}

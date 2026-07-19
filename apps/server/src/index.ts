@@ -129,7 +129,7 @@ app.delete("/api/watches/:id", async (req, reply) => {
 app.get("/api/watches/:id/history", async (req, reply) => {
   const { id } = req.params as { id: string };
   if (!getWatch(id)) return reply.status(404).send({ error: "not_found" });
-  return listHistory(id);
+  return listHistory(id, 10_000);
 });
 
 app.post("/api/watches/:id/check", async (req, reply) => {

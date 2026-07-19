@@ -327,11 +327,23 @@ body {
   }
 }
 
+.history-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
 .section-label {
   font-size: 11px;
   letter-spacing: 0.02em;
   color: var(--muted-2);
   margin: 0 0 10px;
+}
+
+.history-head .section-label {
+  margin: 0;
 }
 
 /* ---------- Empty ---------- */
