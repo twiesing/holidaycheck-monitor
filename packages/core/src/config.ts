@@ -24,6 +24,9 @@ const configSchema = z.object({
   // Parallel independent page loads per check; the cheapest across them wins.
   // More attempts = more reliable against HolidayCheck's partial-list cache.
   scrapeAttempts: z.coerce.number().int().min(1).max(10).default(4),
+  // Delay between scheduled (cron) checks so watches sharing a cron run one
+  // after another instead of all at once.
+  checkDelayMs: z.coerce.number().int().min(0).default(30_000),
   headless: z
     .string()
     .default("true")
@@ -47,6 +50,7 @@ export function loadConfig(): Config {
     pushoverDevice: process.env.PUSHOVER_DEVICE || undefined,
     scrapeTimeoutMs: process.env.SCRAPE_TIMEOUT_MS,
     scrapeAttempts: process.env.SCRAPE_ATTEMPTS,
+    checkDelayMs: process.env.CHECK_DELAY_MS,
     headless: process.env.HEADLESS,
   });
   return cached;

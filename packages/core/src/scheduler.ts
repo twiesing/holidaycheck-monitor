@@ -1,13 +1,29 @@
 import cron, { type ScheduledTask } from "node-cron";
+import { loadConfig } from "./config.js";
 import { checkWatch, getWatch, listWatches } from "./watchService.js";
+
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * Schedules a recurring price check per active watch using its cron expression.
  * Call reconcile() after any watch is created / updated / deleted.
+ *
+ * Scheduled (cron) checks are funneled through a single serial queue with a
+ * fixed delay between them, so watches sharing the same cron don't all fire at
+ * once (which would spawn N × SCRAPE_ATTEMPTS browser contexts simultaneously
+ * and risk being throttled). Manual checks bypass the queue and run at once.
  */
 export class Scheduler {
   private tasks = new Map<string, ScheduledTask>();
   private running = new Set<string>();
+  private queue: string[] = [];
+  private processing = false;
+  private readonly delayMs: number;
+
+  constructor() {
+    this.delayMs = loadConfig().checkDelayMs;
+  }
 
   start(): void {
     this.reconcile();
@@ -28,13 +44,45 @@ export class Scheduler {
       }
     }
 
-    // Add / replace tasks for active watches.
+    // Add / replace tasks for active watches. Cron enqueues rather than running
+    // directly, so ticks are processed one at a time with a delay between them.
     for (const w of watches) {
       if (!activeIds.has(w.id)) continue;
       const existing = this.tasks.get(w.id);
       if (existing) existing.stop();
-      const task = cron.schedule(w.cron, () => void this.runCheck(w.id));
+      const id = w.id;
+      const task = cron.schedule(w.cron, () => this.enqueue(id));
       this.tasks.set(w.id, task);
+    }
+  }
+
+  /** Queue a watch for a scheduled check (deduped against queued/running). */
+  private enqueue(watchId: string): void {
+    if (this.running.has(watchId) || this.queue.includes(watchId)) return;
+    this.queue.push(watchId);
+    void this.processQueue();
+  }
+
+  private async processQueue(): Promise<void> {
+    if (this.processing) return;
+    this.processing = true;
+    try {
+      while (this.queue.length > 0) {
+        const id = this.queue.shift()!;
+        // Guard against a hung check permanently wedging the queue.
+        const cap = loadConfig().scrapeTimeoutMs * 4 + 30_000;
+        await Promise.race([
+          this.runCheck(id),
+          sleep(cap).then(() =>
+            console.error(`[scheduler] check for ${id} exceeded ${cap}ms; moving on`),
+          ),
+        ]);
+        if (this.queue.length > 0 && this.delayMs > 0) {
+          await sleep(this.delayMs);
+        }
+      }
+    } finally {
+      this.processing = false;
     }
   }
 
@@ -56,5 +104,6 @@ export class Scheduler {
   stop(): void {
     for (const task of this.tasks.values()) task.stop();
     this.tasks.clear();
+    this.queue = [];
   }
 }
