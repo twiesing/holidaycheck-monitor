@@ -106,39 +106,38 @@ function parseOffer(raw: unknown): Offer | null {
     | undefined;
   const carrier = (outbound0?.carrier ?? {}) as Record<string, unknown>;
 
-  // Promo labels, minus cashback ads (those come from the reliable price
-  // breakdown below and would otherwise show a confusing second number).
-  const specials = (Array.isArray(o.specials) ? o.specials : [])
-    .map((s) => {
-      const texts = (s as Record<string, unknown>)?.specialTexts;
-      const label = Array.isArray(texts)
-        ? (texts.find(
-            (t) => (t as Record<string, unknown>)?.key === "label",
-          ) as Record<string, unknown> | undefined)
-        : undefined;
-      return str(label?.text);
-    })
-    .filter((l): l is string => l !== null && !/cashback/i.test(l));
+  const specialsRaw = (Array.isArray(o.specials) ? o.specials : []).map(
+    (s) => s as Record<string, unknown>,
+  );
+  const specialLabel = (s: Record<string, unknown>): string | null => {
+    const texts = s.specialTexts;
+    const label = Array.isArray(texts)
+      ? (texts.find(
+          (t) => (t as Record<string, unknown>)?.key === "label",
+        ) as Record<string, unknown> | undefined)
+      : undefined;
+    return str(label?.text);
+  };
+  const isCashback = (s: Record<string, unknown>): boolean =>
+    /CASH_BACK/i.test(typeof s.specialType === "string" ? s.specialType : "");
 
-  // Real, offer-specific cashback/vouchers from the price breakdown. These are
-  // credited back after booking, so we subtract them to get the effective price.
-  const cashbackItems = (Array.isArray(o.priceBreakdown) ? o.priceBreakdown : [])
-    .map((b) => b as Record<string, unknown>)
-    .filter(
-      (b) =>
-        b.included === true &&
-        /CASH_BACK|VOUCHER|DISCOUNT/i.test(
-          typeof b.type === "string" ? b.type : "",
-        ),
-    );
+  // Cashback = all cashback specials, summing their structured discount amount.
+  // HolidayCheck stacks several (e.g. a PERSONAL_CASH_BACK + a CASH_BACK_VOUCHER)
+  // and subtracts the sum from the gross total — matching the site's final price.
   let cashback = 0;
   const priceIncludes: string[] = [];
-  for (const b of cashbackItems) {
-    const amt = (b.price as { amount?: unknown } | undefined)?.amount;
+  for (const s of specialsRaw.filter(isCashback)) {
+    const amt = (s.discount as { amount?: unknown } | undefined)?.amount;
     if (typeof amt === "number") cashback += amt;
-    const l = str(b.label);
+    const l = specialLabel(s);
     if (l) priceIncludes.push(l);
   }
+
+  // Promo labels (non-cashback specials, e.g. "TUI Flashsale") for display only.
+  const specials = specialsRaw
+    .filter((s) => !isCashback(s))
+    .map(specialLabel)
+    .filter((l): l is string => l !== null);
 
   const cancel = (o.cancellationInformation ?? {}) as Record<string, unknown>;
   const freeCancellationUntil =
