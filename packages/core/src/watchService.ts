@@ -266,31 +266,13 @@ export async function checkWatch(watch: Watch): Promise<PricePoint> {
     ? ` · ${formatDate(offer.departureDate)}–${formatDate(offer.returnDate)} · ${offer.tourOperator}`
     : "";
 
+  // Only notify when the wish price is reached (no generic change alerts).
   if (reachedTarget && price !== null && currency !== null && target !== null) {
-    // Wish price reached — takes priority over the generic change alert.
     await sendPush({
       title: `🎯 Wunschpreis erreicht: ${watch.name}`,
       message:
         `${formatPrice(price, currency)} ` +
         `(Wunschpreis ${formatPrice(target, currency)})` +
-        detail,
-      url: watch.url,
-      urlTitle: "Angebot auf HolidayCheck öffnen",
-    });
-  } else if (
-    changed &&
-    price !== null &&
-    currency !== null &&
-    prevPrice !== null
-  ) {
-    const diff = price - prevPrice;
-    const dir = diff < 0 ? "gefallen" : "gestiegen";
-    const arrow = diff < 0 ? "▼" : "▲";
-    await sendPush({
-      title: `Preis ${dir}: ${watch.name}`,
-      message:
-        `${arrow} ${formatPrice(price, currency)} ` +
-        `(vorher ${formatPrice(prevPrice, currency)}, ${diff > 0 ? "+" : ""}${diff.toLocaleString("de-DE")})` +
         detail,
       url: watch.url,
       urlTitle: "Angebot auf HolidayCheck öffnen",
