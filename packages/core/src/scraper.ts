@@ -172,6 +172,9 @@ function parseOffer(raw: unknown): Offer | null {
     effectiveTotal,
     travellers: travellers || 1,
     freeCancellationUntil,
+    city: null, // stamped from the page's schema.org data in scrapeOffers
+    region: null,
+    country: null,
     currency: typeof price?.currency === "string" ? price.currency : "EUR",
     departureDate: toIsoDate(o.departureDate),
     returnDate: toIsoDate(o.returnDate),
@@ -278,6 +281,48 @@ function selectOffer(
 const offerKey = (o: Offer): string =>
   `${o.departureDate}|${o.returnDate}|${o.roomName}|${o.mealType}|${o.pricePerPerson}`;
 
+interface HotelLocation {
+  city: string | null;
+  region: string | null;
+  country: string | null;
+}
+
+/** Read the hotel's location from the page's schema.org (JSON-LD) markup. */
+async function readLocation(page: Page): Promise<HotelLocation | null> {
+  try {
+    return await page.evaluate(() => {
+      // Runs in the browser; core has no DOM lib types, so reach document via
+      // globalThis and treat it structurally.
+      const d = (globalThis as unknown as { document: {
+        querySelectorAll: (s: string) => ArrayLike<{ textContent: string | null }>;
+      } }).document;
+      const nodes = Array.prototype.slice.call(
+        d.querySelectorAll('script[type="application/ld+json"]'),
+      ) as { textContent: string | null }[];
+      for (const s of nodes) {
+        try {
+          const j = JSON.parse(s.textContent || "");
+          for (const item of Array.isArray(j) ? j : [j]) {
+            const a = item?.address;
+            if (a && (a.addressLocality || a.addressCountry)) {
+              return {
+                city: a.addressLocality ?? null,
+                region: a.addressRegion ?? null,
+                country: a.addressCountry ?? null,
+              };
+            }
+          }
+        } catch {
+          /* ignore malformed JSON-LD */
+        }
+      }
+      return null;
+    });
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Load the URL once in a fresh browser context and return the offers found.
  * A fresh context matters: HolidayCheck non-deterministically serves a partial
@@ -290,7 +335,7 @@ async function loadOffersOnce(
   browser: Browser,
   url: string,
   timeoutMs: number,
-): Promise<Offer[]> {
+): Promise<{ offers: Offer[]; location: HotelLocation | null }> {
   const context = await browser.newContext({
     userAgent: USER_AGENT,
     locale: "de-DE",
@@ -328,12 +373,14 @@ async function loadOffersOnce(
       if (byKey.size > 0 && idleFor > 1500) break;
       await page.waitForTimeout(300);
     }
+    const location = await readLocation(page);
+    return { offers: [...byKey.values()], location };
   } catch {
     /* navigation error — return whatever we captured */
+    return { offers: [...byKey.values()], location: null };
   } finally {
     await context.close();
   }
-  return [...byKey.values()];
 }
 
 /**
@@ -351,13 +398,26 @@ export async function scrapeOffers(
 
   const attempts = await Promise.all(
     Array.from({ length: scrapeAttempts }, () =>
-      loadOffersOnce(browser, url, scrapeTimeoutMs).catch(() => [] as Offer[]),
+      loadOffersOnce(browser, url, scrapeTimeoutMs).catch(() => ({
+        offers: [] as Offer[],
+        location: null as HotelLocation | null,
+      })),
     ),
   );
 
   const byKey = new Map<string, Offer>();
-  for (const offers of attempts) {
-    for (const o of offers) byKey.set(offerKey(o), o);
+  let location: HotelLocation | null = null;
+  for (const attempt of attempts) {
+    for (const o of attempt.offers) byKey.set(offerKey(o), o);
+    if (!location && attempt.location) location = attempt.location;
+  }
+  // Stamp the hotel location onto every offer so the selected one carries it.
+  if (location) {
+    for (const o of byKey.values()) {
+      o.city = location.city;
+      o.region = location.region;
+      o.country = location.country;
+    }
   }
   const merged = [...byKey.values()].sort(
     (a, b) => a.effectiveTotal - b.effectiveTotal,

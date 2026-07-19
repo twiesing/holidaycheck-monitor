@@ -121,6 +121,13 @@ export function WatchCard({
       <div className="card-top">
         <div style={{ minWidth: 0 }}>
           <h3 className="hotel-name">{watch.name}</h3>
+          {offer && (offer.city || offer.region || offer.country) && (
+            <p className="location">
+              {[offer.city, offer.region, offer.country]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+          )}
           <Group gap={6}>
             <Badge color="gray" variant="light" size="sm" radius="sm">
               {watch.mode === "cheapest" ? "Günstigster" : "Festes Angebot"}

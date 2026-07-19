@@ -25,6 +25,9 @@ export interface Offer {
   effectiveTotal: number;
   travellers: number;
   freeCancellationUntil: string | null;
+  city: string | null;
+  region: string | null;
+  country: string | null;
   currency: string;
   departureDate: string;
   returnDate: string;

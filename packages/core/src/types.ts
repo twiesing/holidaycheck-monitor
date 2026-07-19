@@ -51,6 +51,10 @@ export interface Offer {
   travellers: number;
   /** ISO datetime until which free cancellation is possible, or null. */
   freeCancellationUntil: string | null;
+  /** Hotel location (from the page's schema.org data). */
+  city: string | null;
+  region: string | null;
+  country: string | null;
   currency: string;
   departureDate: string; // ISO yyyy-mm-dd
   returnDate: string; // ISO yyyy-mm-dd
