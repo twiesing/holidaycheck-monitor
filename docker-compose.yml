@@ -11,7 +11,7 @@
 #   PUSHOVER_DEVICE=...       # optional
 services:
   holidaycheck-monitor:
-    image: ghcr.io/OWNER/holidaycheck-monitor:latest
+    image: ghcr.io/twiesing/holidaycheck-monitor:latest
     # build: .
     restart: unless-stopped
     environment:

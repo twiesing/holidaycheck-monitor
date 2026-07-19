@@ -91,7 +91,7 @@ deployment-spezifischen Werte kommen aus einer `.env` daneben (git-ignoriert):
 #   CADDY_AUTH_GROUPS=larissa_und_tobias
 #   PUSHOVER_TOKEN=...        # optional
 #   PUSHOVER_USER=...         # optional
-# image: ghcr.io/OWNER/holidaycheck-monitor:latest anpassen oder build: . aktivieren
+# image: ghcr.io/twiesing/holidaycheck-monitor:latest anpassen oder build: . aktivieren
 docker compose up -d
 ```
 
