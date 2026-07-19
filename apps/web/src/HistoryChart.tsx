@@ -9,6 +9,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { useMediaQuery } from "@mantine/hooks";
 import { formatDateTime, formatPrice } from "./format";
 import type { PricePoint } from "./types";
 
@@ -19,6 +20,7 @@ export function HistoryChart({
   points: PricePoint[];
   targetPrice?: number | null;
 }) {
+  const compact = useMediaQuery("(max-width: 520px)");
   const data = points
     .filter((p) => p.price !== null)
     .map((p) => ({
@@ -42,11 +44,22 @@ export function HistoryChart({
   const pad = Math.max(5, (Math.max(...prices) - minPrice) * 0.15);
   const yLo = Math.min(minPrice, targetPrice ?? Infinity) - pad;
   const yHi = Math.max(...prices) + pad;
+  const axisWidth = compact ? 62 : 64;
+  const chartHeight = compact ? 220 : 230;
+  const strokeWidth = compact ? 2.5 : 2;
 
   return (
-    <div style={{ width: "100%", fontFamily: "Geist Mono, monospace" }}>
-      <ResponsiveContainer width="100%" height={230}>
-        <ComposedChart data={data} margin={{ top: 12, right: 14, bottom: 8, left: 8 }}>
+    <div style={{ width: "100%", fontFamily: "SF Mono, Cascadia Mono, ui-monospace, monospace" }}>
+      <ResponsiveContainer width="100%" height={chartHeight}>
+        <ComposedChart
+          data={data}
+          margin={{
+            top: 12,
+            right: compact ? 4 : 14,
+            bottom: 8,
+            left: compact ? 0 : 8,
+          }}
+        >
           <defs>
             <linearGradient id="priceFill" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={ink} stopOpacity={0.1} />
@@ -70,13 +83,13 @@ export function HistoryChart({
             tickMargin={10}
             axisLine={false}
             tickLine={false}
-            minTickGap={40}
+            minTickGap={compact ? 28 : 40}
           />
           <YAxis
             domain={[Math.floor(yLo), Math.ceil(yHi)]}
             stroke={axis}
             fontSize={11}
-            width={64}
+            width={axisWidth}
             tickFormatter={(v: number) => `${Math.round(v).toLocaleString("de-DE")} €`}
             axisLine={false}
             tickLine={false}
@@ -105,7 +118,7 @@ export function HistoryChart({
                 value: `Ziel ${formatPrice(targetPrice, currency)}`,
                 position: "insideBottomRight",
                 fill: low,
-                fontSize: 10,
+                fontSize: compact ? 9 : 10,
               }}
             />
           )}
@@ -113,7 +126,7 @@ export function HistoryChart({
             type="stepAfter"
             dataKey="price"
             stroke={ink}
-            strokeWidth={2}
+            strokeWidth={strokeWidth}
             fill="url(#priceFill)"
             dot={false}
             activeDot={{ r: 4, fill: ink }}

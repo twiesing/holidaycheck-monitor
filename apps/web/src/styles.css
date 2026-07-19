@@ -11,6 +11,9 @@
   --down-border: #bbf7d0;
   --up: #b91c1c;
   --accent-bg: #f4f4f5;
+  --radius-card: 10px;
+  --shadow-card: 0 1px 2px rgba(17, 17, 17, 0.035);
+  --shadow-card-hover: 0 10px 28px -18px rgba(17, 17, 17, 0.35);
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
@@ -25,13 +28,19 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: "Geist", system-ui, sans-serif;
+  font-family:
+    ui-sans-serif,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI Variable",
+    "Segoe UI",
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
 .mono {
-  font-family: "Geist Mono", ui-monospace, monospace;
+  font-family: "SF Mono", "Cascadia Mono", ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
 }
 
@@ -47,6 +56,13 @@ body {
 .mantine-Button-root:active,
 .mantine-ActionIcon-root:active {
   transform: scale(0.97);
+}
+
+.mantine-Button-root:focus-visible,
+.mantine-ActionIcon-root:focus-visible,
+.group-head:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--text) 72%, transparent);
+  outline-offset: 3px;
 }
 
 .app {
@@ -95,6 +111,7 @@ body {
   align-items: center;
   gap: 10px;
   width: 100%;
+  min-height: 44px;
   padding: 8px 4px;
   background: none;
   border: none;
@@ -143,9 +160,9 @@ body {
 .watch-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-card);
   padding: 20px 22px;
-  box-shadow: 0 1px 2px rgba(17, 17, 17, 0.03);
+  box-shadow: var(--shadow-card);
   transition:
     transform 200ms var(--ease-out),
     box-shadow 200ms var(--ease-out),
@@ -156,7 +173,7 @@ body {
 @media (hover: hover) and (pointer: fine) {
   .watch-card:hover {
     border-color: var(--border-strong);
-    box-shadow: 0 4px 16px -8px rgba(17, 17, 17, 0.12);
+    box-shadow: var(--shadow-card-hover);
   }
 }
 
@@ -183,13 +200,30 @@ body {
 }
 
 .location {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin: 0 0 7px;
   font-size: 12.5px;
   color: var(--muted);
 }
 
-.location::before {
-  content: "📍 ";
+.location-mark {
+  position: relative;
+  width: 9px;
+  height: 9px;
+  flex: 0 0 9px;
+  background: #ef4444;
+  border-radius: 50% 50% 50% 0;
+  transform: translateY(-1px) rotate(-45deg);
+}
+
+.location-mark::after {
+  position: absolute;
+  inset: 2.5px;
+  background: var(--surface);
+  border-radius: 999px;
+  content: "";
 }
 
 /* ---------- Price ---------- */
@@ -364,6 +398,10 @@ body {
   align-items: center;
 }
 
+.label-compact {
+  display: none;
+}
+
 /* ---------- History panel ---------- */
 .history-panel {
   margin-top: 16px;
@@ -403,7 +441,7 @@ body {
   text-align: center;
   padding: 64px 24px;
   border: 1px dashed var(--border-strong);
-  border-radius: 14px;
+  border-radius: var(--radius-card);
   background: var(--surface);
 }
 .empty h2 {
@@ -436,10 +474,68 @@ body {
   .app {
     padding: 40px 18px 96px;
   }
-  /* Stack the header so the add button never gets clipped. */
+
   .head {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+  }
+
+  .watch-card {
+    padding: 18px 22px;
+  }
+
+  .card-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 14px;
+  }
+
+  .price-value {
+    font-size: 24px;
+  }
+
+  .card-foot {
+    align-items: stretch;
+  }
+
+  .card-foot .stamp {
+    flex-basis: 100%;
+  }
+
+  .card-actions {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .card-actions .mantine-Button-root,
+  .card-actions .mantine-ActionIcon-root {
+    min-height: 40px;
+  }
+
+  .card-actions .mantine-ActionIcon-root {
+    min-width: 40px;
+  }
+
+  .primary-card-action {
+    flex: 1 1 0;
+  }
+
+  .label-wide {
+    display: none;
+  }
+
+  .label-compact {
+    display: inline;
+  }
+}
+
+@media (max-width: 360px) {
+  .card-top {
+    grid-template-columns: 1fr;
+  }
+
+  .price-tag {
+    text-align: left;
   }
 }

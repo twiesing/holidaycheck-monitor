@@ -19,11 +19,11 @@ export const theme = createTheme({
   primaryShade: { light: 8, dark: 9 },
   colors: { ink },
   fontFamily:
-    '"Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif',
+    'ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", sans-serif',
   fontFamilyMonospace:
-    '"Geist Mono", ui-monospace, "SF Mono", Menlo, monospace',
+    '"SF Mono", "Cascadia Mono", ui-monospace, Menlo, monospace',
   defaultRadius: "md",
   black: "#171717",
-  radius: { md: "10px", lg: "14px" },
+  radius: { md: "8px", lg: "12px" },
   cursorType: "pointer",
 });

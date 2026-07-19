@@ -132,6 +132,7 @@ export function WatchCard({
           <h3 className="hotel-name">{watch.name}</h3>
           {offer && (offer.city || offer.region || offer.country) && (
             <p className="location">
+              <span className="location-mark" aria-hidden="true" />
               {[offer.city, offer.region, offer.country]
                 .filter(Boolean)
                 .join(" · ")}
@@ -287,8 +288,10 @@ export function WatchCard({
             target="_blank"
             rel="noreferrer"
             size="xs"
+            className="primary-card-action"
           >
-            Auf HolidayCheck öffnen
+            <span className="label-wide">Auf HolidayCheck öffnen</span>
+            <span className="label-compact">Öffnen</span>
           </Button>
           <Button
             variant="default"
