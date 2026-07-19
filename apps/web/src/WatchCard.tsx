@@ -84,6 +84,7 @@ export function WatchCard({
       ? price - watch.previousPrice
       : null;
   const offer = latest?.offer;
+  const bookingUrl = offer?.bookingUrl ?? null;
   const promos = offer
     ? offer.specials.filter((s) => !offer.priceIncludes.includes(s))
     : [];
@@ -290,9 +291,22 @@ export function WatchCard({
             size="xs"
             className="primary-card-action"
           >
-            <span className="label-wide">Auf HolidayCheck öffnen</span>
-            <span className="label-compact">Öffnen</span>
+            <span className="label-wide">Suchauftrag öffnen</span>
+            <span className="label-compact">Suche</span>
           </Button>
+          {bookingUrl && (
+            <Button
+              component="a"
+              href={bookingUrl}
+              target="_blank"
+              rel="noreferrer"
+              variant="default"
+              size="xs"
+            >
+              <span className="label-wide">Zur Buchung</span>
+              <span className="label-compact">Buchung</span>
+            </Button>
+          )}
           <Button
             variant="default"
             size="xs"

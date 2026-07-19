@@ -64,6 +64,8 @@ export interface Offer {
   mealTypeName: string; // human-readable, e.g. "Halbpension"
   tourOperator: string;
   bookingCode: string | null;
+  /** Concrete HolidayCheck booking URL for the selected offer, if available. */
+  bookingUrl: string | null;
   /** Included extras, e.g. "inkl. Zug zum Flug". */
   attributes: string[];
   /** Transfer note, e.g. "inkl. Hoteltransfer". */

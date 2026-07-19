@@ -81,8 +81,63 @@ function parseLeg(
   };
 }
 
+function absoluteUrl(value: string, baseUrl: string): string | null {
+  try {
+    return new URL(value, baseUrl).toString();
+  } catch {
+    return null;
+  }
+}
+
+function hotelSlugFromUrl(url: string): string | null {
+  try {
+    const parts = new URL(url).pathname.split("/").filter(Boolean);
+    const slug = parts[0] === "ho" ? parts[1] : null;
+    return slug ? slug.replace(/^angebote-/, "") : null;
+  } catch {
+    return null;
+  }
+}
+
+function hotelIdFromUrl(url: string): string | null {
+  try {
+    const parts = new URL(url).pathname.split("/").filter(Boolean);
+    return parts[0] === "ho" && parts[2] ? parts[2] : null;
+  } catch {
+    return null;
+  }
+}
+
+function bookingUrl(raw: Record<string, unknown>, sourceUrl: string): string | null {
+  const clickOut = raw.clickOutUrl;
+  if (typeof clickOut === "string" && clickOut.length > 0) {
+    return absoluteUrl(clickOut, sourceUrl);
+  }
+
+  const offerId = raw.offerId;
+  if (typeof offerId !== "string" || offerId.length === 0) return null;
+
+  const provider = (raw.providerRawData ?? {}) as Record<string, unknown>;
+  const hotelId =
+    typeof raw.hotelId === "string" ? raw.hotelId : hotelIdFromUrl(sourceUrl);
+  const hotelName = hotelSlugFromUrl(sourceUrl);
+  const tourOperator =
+    typeof provider.tourOperatorCode === "string"
+      ? provider.tourOperatorCode
+      : null;
+
+  const url = new URL(`/wbf/booking/${offerId}`, sourceUrl);
+  url.searchParams.set("ctx", "hotel-offerlist");
+  if (hotelId) url.searchParams.set("hotelid", hotelId);
+  if (hotelName) url.searchParams.set("hotelname", hotelName);
+  url.searchParams.set("sorting", "recommendationPrice");
+  if (tourOperator) url.searchParams.set("tourOperator", tourOperator);
+  url.searchParams.set("travelkind", "package");
+  return url.toString();
+}
+
 /** Defensively map one raw vacancy-API offer object to our Offer shape. */
-function parseOffer(raw: unknown): Offer | null {
+function parseOffer(raw: unknown, sourceUrl: string): Offer | null {
   if (!raw || typeof raw !== "object") return null;
   const o = raw as Record<string, unknown>;
   const price = o.pricePerPerson as { amount?: unknown; currency?: unknown } | undefined;
@@ -183,6 +238,7 @@ function parseOffer(raw: unknown): Offer | null {
     mealTypeName: str(o.mealTypeName) ?? "",
     tourOperator: str(operator.name) ?? "",
     bookingCode: str(provider.bookingCode),
+    bookingUrl: bookingUrl(o, sourceUrl),
     attributes,
     transferName: str(o.transferName),
     directFlight: o.directFlight === true,
@@ -351,7 +407,7 @@ async function loadOffersOnce(
       .json()
       .then((j: unknown) => {
         for (const raw of extractOffers(j)) {
-          const offer = parseOffer(raw);
+          const offer = parseOffer(raw, url);
           if (!offer) continue;
           byKey.set(offerKey(offer), offer);
           lastHit = Date.now();

@@ -274,8 +274,10 @@ export async function checkWatch(watch: Watch): Promise<PricePoint> {
         `${formatPrice(price, currency)} ` +
         `(Wunschpreis ${formatPrice(target, currency)})` +
         detail,
-      url: watch.url,
-      urlTitle: "Angebot auf HolidayCheck öffnen",
+      url: offer?.bookingUrl ?? watch.url,
+      urlTitle: offer?.bookingUrl
+        ? "Freie Plätze prüfen"
+        : "Angebot auf HolidayCheck öffnen",
     });
   }
 

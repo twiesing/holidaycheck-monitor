@@ -37,6 +37,7 @@ export interface Offer {
   mealTypeName: string;
   tourOperator: string;
   bookingCode: string | null;
+  bookingUrl: string | null;
   attributes: string[];
   transferName: string | null;
   directFlight: boolean;
