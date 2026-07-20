@@ -8,19 +8,24 @@ export interface ScrapeResult {
   selected: Offer | null;
 }
 
-const USER_AGENT =
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
-  "(KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36";
-
 /** Endpoints that carry package-offer prices. */
 const OFFER_API = /\/api\/(vacanc|all-offers-service)/;
+
+const BLOCK_PAGE_TEXT =
+  "Diese Funktionalität steht gerade nicht zur Verfügung";
 
 let browserPromise: Promise<Browser> | null = null;
 
 async function getBrowser(): Promise<Browser> {
   if (!browserPromise) {
     const { headless } = loadConfig();
-    browserPromise = chromium.launch({ headless });
+    browserPromise = chromium.launch({
+      headless,
+      // Keep navigator.webdriver from advertising the automation session.
+      // HolidayCheck otherwise serves a generic block page without loading
+      // any of the offer APIs.
+      args: ["--disable-blink-features=AutomationControlled"],
+    });
   }
   return browserPromise;
 }
@@ -391,13 +396,42 @@ async function loadOffersOnce(
   url: string,
   timeoutMs: number,
 ): Promise<{ offers: Offer[]; location: HotelLocation | null }> {
+  // Match the UA and client-hint version to Playwright's bundled Chromium.
+  // A hard-coded future Chrome version is an inconsistent fingerprint and is
+  // rejected by HolidayCheck before the offer API can run.
+  const chromiumVersion = browser.version();
+  const chromiumMajor = chromiumVersion.split(".")[0] ?? "149";
+  // Rotate between Chromium's exact version and Chrome's commonly reduced UA
+  // version. Both describe the browser that is actually running, so the
+  // randomisation does not create a detectable version mismatch.
+  const uaVersions = [chromiumVersion, `${chromiumMajor}.0.0.0`];
+  const uaVersion =
+    uaVersions[Math.floor(Math.random() * uaVersions.length)] ??
+    `${chromiumMajor}.0.0.0`;
+  const isMac = process.platform === "darwin";
+  const platformToken = isMac
+    ? "Macintosh; Intel Mac OS X 10_15_7"
+    : "X11; Linux x86_64";
+  const userAgent =
+    `Mozilla/5.0 (${platformToken}) AppleWebKit/537.36 ` +
+    `(KHTML, like Gecko) Chrome/${uaVersion} Safari/537.36`;
   const context = await browser.newContext({
-    userAgent: USER_AGENT,
+    userAgent,
     locale: "de-DE",
     timezoneId: "Europe/Berlin",
     viewport: { width: 1440, height: 900 },
+    extraHTTPHeaders: {
+      "sec-ch-ua":
+        `"Chromium";v="${chromiumMajor}", ` +
+        `"Google Chrome";v="${chromiumMajor}", "Not_A Brand";v="99"`,
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": isMac ? '"macOS"' : '"Linux"',
+    },
   });
   const page = await context.newPage();
+  await page.addInitScript(
+    "Object.defineProperty(Navigator.prototype, 'webdriver', { get: () => undefined });",
+  );
   const byKey = new Map<string, Offer>();
   let lastHit = 0;
 
@@ -421,6 +455,12 @@ async function loadOffersOnce(
   try {
     const deadline = Date.now() + timeoutMs;
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    const bodyText = await page.locator("body").innerText().catch(() => "");
+    if (bodyText.includes(BLOCK_PAGE_TEXT)) {
+      throw new Error(
+        "HolidayCheck blockiert gerade den automatisierten Zugriff; bitte später erneut versuchen",
+      );
+    }
     void dismissConsent(page); // offers load without it, but just in case
     // Wait for the offer response to arrive, then a short idle to let it finish.
     while (Date.now() < deadline) {
@@ -430,7 +470,13 @@ async function loadOffersOnce(
     }
     const location = await readLocation(page);
     return { offers: [...byKey.values()], location };
-  } catch {
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.startsWith("HolidayCheck blockiert")
+    ) {
+      throw error;
+    }
     /* navigation error — return whatever we captured */
     return { offers: [...byKey.values()], location: null };
   } finally {
@@ -440,8 +486,8 @@ async function loadOffersOnce(
 
 /**
  * Load a HolidayCheck package-offer URL and extract the offers, then pick one
- * per mode/criteria. Runs several independent loads in parallel and unions the
- * results to defeat HolidayCheck's partial-list caching (see loadOffersOnce).
+ * per mode/criteria. Runs several independent loads and unions the results to
+ * defeat HolidayCheck's partial-list caching (see loadOffersOnce).
  */
 export async function scrapeOffers(
   url: string,
@@ -451,14 +497,15 @@ export async function scrapeOffers(
   const { scrapeTimeoutMs, scrapeAttempts } = loadConfig();
   const browser = await getBrowser();
 
-  const attempts = await Promise.all(
-    Array.from({ length: scrapeAttempts }, () =>
-      loadOffersOnce(browser, url, scrapeTimeoutMs).catch(() => ({
-        offers: [] as Offer[],
-        location: null as HotelLocation | null,
-      })),
-    ),
-  );
+  // Keep requests sequential. Four simultaneous fresh browser contexts look
+  // like a burst of automated traffic and can trigger HolidayCheck's block.
+  const attempts: Awaited<ReturnType<typeof loadOffersOnce>>[] = [];
+  for (let i = 0; i < scrapeAttempts; i += 1) {
+    attempts.push(await loadOffersOnce(browser, url, scrapeTimeoutMs));
+    if (i < scrapeAttempts - 1) {
+      await new Promise((resolve) => setTimeout(resolve, 750));
+    }
+  }
 
   const byKey = new Map<string, Offer>();
   let location: HotelLocation | null = null;
